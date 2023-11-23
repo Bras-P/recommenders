@@ -8,6 +8,8 @@ from tqdm import tqdm
 import tensorflow as tf
 from tensorflow.compat.v1 import keras
 
+from collections import deque
+
 from recommenders.models.deeprec.deeprec_utils import cal_metric
 
 tf.compat.v1.disable_eager_execution()
@@ -425,3 +427,114 @@ class BaseModel:
             group_preds.append(pred)
 
         return group_impr_indexes, group_labels, group_preds
+
+    def custom_fit(
+        self,
+        train_news_file,
+        train_behaviors_file,
+        valid_news_file,
+        valid_behaviors_file,
+        test_news_file=None,
+        test_behaviors_file=None,
+    ):
+        """
+        Custom fit including an early stopping callback;
+        otherwise everything else is the same as in the fit method
+        """
+        if hasattr(self.hparams, "use_early_stopping") and self.hparams.use_early_stopping:
+            self.last_eval_res = deque() # the last evaluations to compare for early stopping
+
+        for epoch in range(1, self.hparams.epochs + 1):
+            step = 0
+            self.hparams.current_epoch = epoch
+            epoch_loss = 0
+
+            train_start = time.time()
+
+            tqdm_util = tqdm(
+                self.train_iterator.load_data_from_file(
+                    train_news_file, train_behaviors_file
+                )
+            )
+
+            for batch_data_input in tqdm_util:
+
+                step_result = self.train(batch_data_input)
+                step_data_loss = step_result
+
+                epoch_loss += step_data_loss
+                step += 1
+                if step % self.hparams.show_step == 0:
+                    tqdm_util.set_description(
+                        "step {0:d} , total_loss: {1:.4f}, data_loss: {2:.4f}".format(
+                            step, epoch_loss / step, step_data_loss
+                        )
+                    )
+
+            train_end = time.time()
+            train_time = train_end - train_start
+
+            eval_start = time.time()
+
+            train_info = ",".join(
+                [
+                    str(item[0]) + ":" + str(item[1])
+                    for item in [("logloss loss", epoch_loss / step)]
+                ]
+            )
+
+            eval_res = self.run_eval(valid_news_file, valid_behaviors_file)
+            eval_info = ", ".join(
+                [
+                    str(item[0]) + ":" + str(item[1])
+                    for item in sorted(eval_res.items(), key=lambda x: x[0])
+                ]
+            )
+            if test_news_file is not None:
+                test_res = self.run_eval(test_news_file, test_behaviors_file)
+                test_info = ", ".join(
+                    [
+                        str(item[0]) + ":" + str(item[1])
+                        for item in sorted(test_res.items(), key=lambda x: x[0])
+                    ]
+                )
+            eval_end = time.time()
+            eval_time = eval_end - eval_start
+
+            if test_news_file is not None:
+                print(
+                    "at epoch {0:d}".format(epoch)
+                    + "\ntrain info: "
+                    + train_info
+                    + "\neval info: "
+                    + eval_info
+                    + "\ntest info: "
+                    + test_info
+                )
+            else:
+                print(
+                    "at epoch {0:d}".format(epoch)
+                    + "\ntrain info: "
+                    + train_info
+                    + "\neval info: "
+                    + eval_info
+                )
+            print(
+                "at epoch {0:d} , train time: {1:.1f} eval time: {2:.1f}".format(
+                    epoch, train_time, eval_time
+                )
+            )
+
+            # Early stopping callback
+            if hasattr(self.hparams, "use_early_stopping") and self.hparams.use_early_stopping:
+                eval_early_stopping = eval_res[self.hparams.early_stopping_metric]
+                # we assume that the monitor metric is "higher is better"
+                if epoch >= self.hparams.early_stopping_start_from_epoch and eval_early_stopping < min(self.last_eval_res):
+                    print('Stopped after early stopping callback')
+                    return self # stop the training
+                
+                if len(self.last_eval_res) >= self.hparams.early_stopping_patience:
+                    self.last_eval_res.popleft()
+                self.last_eval_res.append(eval_early_stopping)
+
+        return self
