@@ -31,6 +31,7 @@ class BaseModel:
         hparams,
         iterator_creator,
         seed=None,
+        create_new_sess = True,
     ):
         """Initializing the model. Create common logics which are needed by all deeprec models, such as loss function,
         parameter set.
@@ -58,14 +59,15 @@ class BaseModel:
         self.hparams = hparams
         self.support_quick_scoring = hparams.support_quick_scoring
 
+        if create_new_sess:
         # set GPU use with on demand growth
-        gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
-        sess = tf.compat.v1.Session(
-            config=tf.compat.v1.ConfigProto(gpu_options=gpu_options)
-        )
+            gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
+            sess = tf.compat.v1.Session(
+                config=tf.compat.v1.ConfigProto(gpu_options=gpu_options)
+            )
 
-        # set this TensorFlow session as the default session for Keras
-        tf.compat.v1.keras.backend.set_session(sess)
+            # set this TensorFlow session as the default session for Keras
+            tf.compat.v1.keras.backend.set_session(sess)
 
         # IMPORTANT: models have to be loaded AFTER SETTING THE SESSION for keras!
         # Otherwise, their weights will be unavailable in the threads after the session there has been set
