@@ -29,7 +29,6 @@ class NRMSModel(BaseModel):
         hparams,
         iterator_creator,
         seed=None,
-        create_new_sess=True,
     ):
         """Initialization steps for NRMS.
         Compared with the BaseModel, NRMS need word embedding.
@@ -46,7 +45,6 @@ class NRMSModel(BaseModel):
             hparams,
             iterator_creator,
             seed=seed,
-            create_new_sess=create_new_sess,
         )
 
     def _get_input_label_from_iter(self, batch_data):
