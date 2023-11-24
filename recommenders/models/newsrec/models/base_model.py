@@ -6,14 +6,13 @@ import time
 import numpy as np
 from tqdm import tqdm
 import tensorflow as tf
-from tensorflow.compat.v1 import keras
+from tensorflow import keras
 
 from collections import deque
 
 from recommenders.models.deeprec.deeprec_utils import cal_metric
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.experimental.output_all_intermediates(True)
+
 __all__ = ["BaseModel"]
 
 
@@ -33,7 +32,6 @@ class BaseModel:
         hparams,
         iterator_creator,
         seed=None,
-        create_new_sess = True,
     ):
         """Initializing the model. Create common logics which are needed by all deeprec models, such as loss function,
         parameter set.
@@ -45,7 +43,7 @@ class BaseModel:
             seed (int): Random seed.
         """
         self.seed = seed
-        tf.compat.v1.set_random_seed(seed)
+        tf.random.set_seed(seed)
         np.random.seed(seed)
 
         self.train_iterator = iterator_creator(
@@ -61,18 +59,8 @@ class BaseModel:
         self.hparams = hparams
         self.support_quick_scoring = hparams.support_quick_scoring
 
-        if create_new_sess:
-        # set GPU use with on demand growth
-            gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
-            sess = tf.compat.v1.Session(
-                config=tf.compat.v1.ConfigProto(gpu_options=gpu_options)
-            )
 
-            # set this TensorFlow session as the default session for Keras
-            tf.compat.v1.keras.backend.set_session(sess)
 
-        # IMPORTANT: models have to be loaded AFTER SETTING THE SESSION for keras!
-        # Otherwise, their weights will be unavailable in the threads after the session there has been set
         self.model, self.scorer = self._build_graph()
 
         self.loss = self._get_loss()

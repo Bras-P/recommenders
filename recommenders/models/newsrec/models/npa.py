@@ -22,7 +22,7 @@ class NPAModel(BaseModel):
         hparam (object): Global hyper-parameters.
     """
 
-    def __init__(self, hparams, iterator_creator, seed=None, create_new_sess=True):
+    def __init__(self, hparams, iterator_creator, seed=None):
         """Initialization steps for MANL.
         Compared with the BaseModel, NPA need word embedding.
         After creating word embedding matrix, BaseModel's __init__ method will be called.
@@ -36,7 +36,7 @@ class NPAModel(BaseModel):
         self.word2vec_embedding = self._init_embedding(hparams.wordEmb_file)
         self.hparam = hparams
 
-        super().__init__(hparams, iterator_creator, seed=seed, create_new_sess=create_new_sess)
+        super().__init__(hparams, iterator_creator, seed=seed)
 
     def _get_input_label_from_iter(self, batch_data):
         input_feat = [

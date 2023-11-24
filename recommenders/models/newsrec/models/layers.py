@@ -1,10 +1,10 @@
 # Copyright (c) Recommenders contributors.
 # Licensed under the MIT License.
 
-import tensorflow.compat.v1.keras as keras
-from tensorflow.compat.v1.linalg import einsum
-from tensorflow.compat.v1.keras import layers
-from tensorflow.compat.v1.keras import backend as K
+import tensorflow.keras as keras
+from tensorflow.linalg import einsum
+from tensorflow.keras import layers
+from tensorflow.keras import backend as K
 
 
 class AttLayer2(layers.Layer):
