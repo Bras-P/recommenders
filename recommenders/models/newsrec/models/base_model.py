@@ -442,7 +442,8 @@ class BaseModel:
             # fine step for last epochs
             if hasattr(self.hparams, "use_fine_step") and self.hparams.use_fine_step:
                 if epoch == self.hparams.fine_step_from_epoch:
-                    self.model.learning_rate = self.model.learning_rate * self.hparams.fine_step_factor
+                    print('\nDecreasing learning rate for new plateau')
+                    self.model.optimizer.learning_rate = self.model.optimizer.learning_rate * self.hparams.fine_step_factor
 
             step = 0
             self.hparams.current_epoch = epoch
