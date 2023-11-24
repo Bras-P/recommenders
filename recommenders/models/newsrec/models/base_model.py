@@ -111,6 +111,13 @@ class BaseModel:
         """
         lr = self.hparams.learning_rate
         optimizer_name = self.hparams.optimizer.lower()
+
+        opt_dict = {
+            'rmsprop': 'RMSprop', 'sgd': 'SGD', 'adamw': 'AdamW',
+        }
+        if optimizer_name in opt_dict:
+            optimizer_name = opt_dict[optimizer_name]
+            
         OptimizerClass = getattr(keras.optimizers, optimizer_name.capitalize())
         train_opt = OptimizerClass(learning_rate = lr)
         return train_opt
@@ -431,6 +438,12 @@ class BaseModel:
             self.last_eval_res = deque() # the last evaluations to compare for early stopping
 
         for epoch in range(1, self.hparams.epochs + 1):
+
+            # fine step for last epochs
+            if hasattr(self.hparams, "use_fine_step") and self.hparams.use_fine_step:
+                if epoch == self.hparams.fine_step_from_epoch:
+                    self.model.learning_rate = self.model.learning_rate * self.hparams.fine_step_factor
+
             step = 0
             self.hparams.current_epoch = epoch
             epoch_loss = 0
