@@ -110,11 +110,9 @@ class BaseModel:
             object: An optimizer.
         """
         lr = self.hparams.learning_rate
-        optimizer = self.hparams.optimizer
-
-        if optimizer == "adam":
-            train_opt = keras.optimizers.Adam(lr=lr)
-
+        optimizer_name = self.hparams.optimizer.lower()
+        OptimizerClass = getattr(keras.optimizers, optimizer_name.capitalize())
+        train_opt = OptimizerClass(learning_rate = lr)
         return train_opt
 
     def _get_pred(self, logit, task):
