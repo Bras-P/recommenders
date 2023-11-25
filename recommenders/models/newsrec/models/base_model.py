@@ -443,7 +443,7 @@ class BaseModel:
             if hasattr(self.hparams, "use_fine_step") and self.hparams.use_fine_step:
                 if epoch == self.hparams.fine_step_from_epoch:
                     print('\nDecreasing learning rate for new plateau')
-                    self.model.optimizer.learning_rate = self.model.optimizer.learning_rate * self.hparams.fine_step_factor
+                    self.model.optimizer.learning_rate = self.hparams.learning_rate * self.hparams.fine_step_factor
 
             step = 0
             self.hparams.current_epoch = epoch
@@ -530,8 +530,16 @@ class BaseModel:
                 eval_early_stopping = eval_res[self.hparams.early_stopping_metric]
                 # we assume that the monitor metric is "higher is better"
                 if epoch >= self.hparams.early_stopping_start_from_epoch and eval_early_stopping < min(self.last_eval_res):
-                    print('Stopped after early stopping callback')
-                    return self # stop the training
+                    if hasattr(self.hparams, "use_fine_step") and self.hparams.use_fine_step:
+                        if epoch >= self.hparams.fine_step_from_epoch:
+                            print('Stopped after early stopping callback')
+                            return self # stop the training
+                        else: # if early stopping but not yet at fine tuning, we go to fine tuning directly
+                            print('Going to fine tuning after early stopping')
+                            self.model.optimizer.learning_rate = self.hparams.learning_rate * self.hparams.fine_step_factor
+                    else:
+                        print('Stopped after early stopping callback')
+                        return self # stop the training
                 
                 if len(self.last_eval_res) >= self.hparams.early_stopping_patience:
                     self.last_eval_res.popleft()
