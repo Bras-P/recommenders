@@ -429,6 +429,7 @@ class BaseModel:
         valid_behaviors_file,
         test_news_file=None,
         test_behaviors_file=None,
+        checkpoint_path=None,
     ):
         """
         Custom fit including an early stopping callback;
@@ -524,6 +525,10 @@ class BaseModel:
                     epoch, train_time, eval_time
                 )
             )
+
+            # automatically save last checkpoint
+            if checkpoint_path != None:
+                self.model.save_weights(checkpoint_path)
 
             # Early stopping callback
             if hasattr(self.hparams, "use_early_stopping") and self.hparams.use_early_stopping:
