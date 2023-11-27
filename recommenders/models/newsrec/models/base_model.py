@@ -484,13 +484,17 @@ class BaseModel:
                 ]
             )
 
-            eval_res = self.run_eval(valid_news_file, valid_behaviors_file)
-            eval_info = ", ".join(
-                [
-                    str(item[0]) + ":" + str(item[1])
-                    for item in sorted(eval_res.items(), key=lambda x: x[0])
-                ]
-            )
+
+            if hasattr(self.hparams, "deactivate_eval") and self.hparams.deactivate_eval:
+                eval_info = ''
+            else:
+                eval_res = self.run_eval(valid_news_file, valid_behaviors_file)
+                eval_info = ", ".join(
+                    [
+                        str(item[0]) + ":" + str(item[1])
+                        for item in sorted(eval_res.items(), key=lambda x: x[0])
+                    ]
+                )
             if test_news_file is not None:
                 test_res = self.run_eval(test_news_file, test_behaviors_file)
                 test_info = ", ".join(
