@@ -538,7 +538,7 @@ class BaseModel:
             if hasattr(self.hparams, "use_early_stopping") and self.hparams.use_early_stopping:
                 eval_early_stopping = eval_res[self.hparams.early_stopping_metric]
                 # we assume that the monitor metric is "higher is better"
-                if epoch >= self.hparams.early_stopping_start_from_epoch and eval_early_stopping < min(self.last_eval_res):
+                if epoch >= self.hparams.early_stopping_start_from_epoch and eval_early_stopping < min(self.last_eval_res) + self.hparams.early_stopping_delta:
                     if hasattr(self.hparams, "use_fine_step") and self.hparams.use_fine_step:
                         if epoch >= self.hparams.fine_step_from_epoch:
                             print('Stopped after early stopping callback')
